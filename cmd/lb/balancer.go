@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"hash/fnv"
 
 	"github.com/roman-mazur/design-practice-3-template/httptools"
 	"github.com/roman-mazur/design-practice-3-template/signal"
@@ -84,22 +85,43 @@ func forward(dst string, rw http.ResponseWriter, r *http.Request) error {
 	}
 }
 
+func determineServerByURL(URL string, serversPool []string) int {
+	return int(hash(URL)) % (len(serversPool))
+}
+
+func hash(s string) uint32 {
+	h := fnv.New32a()
+	h.Write([]byte(s))
+	return h.Sum32()
+}
+
 func main() {
 	flag.Parse()
 
-	// TODO: Використовуйте дані про стан сервреа, щоб підтримувати список тих серверів, яким можна відправляти ззапит.
-	for _, server := range serversPool {
+	serversHealthPool := make([]bool, len(serversPool))
+	for i, server := range serversPool {
 		server := server
+		i := i
 		go func() {
 			for range time.Tick(10 * time.Second) {
-				log.Println(server, health(server))
+				resp := health(server)
+				serversHealthPool[i] = resp
+				log.Println(server, resp)
+				/* DEBUG PRINT: remove later!!! */
+				//fmt.Printf("%v\n", serversHealthPool)
 			}
 		}()
 	}
 
 	frontend := httptools.CreateServer(*port, http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		// TODO: Рееалізуйте свій алгоритм балансувальника.
-		forward(serversPool[0], rw, r)
+		serverIndex := determineServerByURL(r.URL.Path, serversPool)
+		if serversHealthPool[serverIndex] {
+			forward(serversPool[serverIndex], rw, r)
+			/* DEBUG PRINT: remove later!!! */
+			//log.Println(serverIndex, int(hash(r.URL.Path)), len(serversPool) , r.URL.Path)
+		} else {
+			log.Println("Sorry, server is unavailable now!")
+		}
 	}))
 
 	log.Println("Starting load balancer...")
