@@ -10,8 +10,8 @@ import (
 	"time"
 	"hash/fnv"
 
-	"github.com/roman-mazur/design-practice-3-template/httptools"
-	"github.com/roman-mazur/design-practice-3-template/signal"
+	"github.com/dkalytovskyi/go-lab-3/httptools"
+	"github.com/dkalytovskyi/go-lab-3/signal"
 )
 
 var (
