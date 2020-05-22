@@ -1,0 +1,4 @@
+go_binary {
+  name: "integration-tests",
+  testPkg: "github.com/dkalytovskyi/go-lab-3/integration"
+}
