@@ -31,10 +31,10 @@ func TestBalancer(t *testing.T) {
 	if err4 != nil {
 		t.Error(err4)
 	}
-	assert.NotEqual(resp1.Header.Get("lb-from"), resp2.Header.Get("lb-from"))
-	assert.NotEqual(resp1.Header.Get("lb-from"), resp3.Header.Get("lb-from"))
-	assert.NotEqual(resp2.Header.Get("lb-from"), resp3.Header.Get("lb-from"))
-	assert.Equal(resp1.Header.Get("lb-from"), resp4.Header.Get("lb-from"))
+	assert.NotEqual(t, resp1.Header.Get("lb-from"), resp2.Header.Get("lb-from"), "They must be different")
+	assert.NotEqual(t, resp1.Header.Get("lb-from"), resp3.Header.Get("lb-from"), "They must be different")
+	assert.NotEqual(t, resp2.Header.Get("lb-from"), resp3.Header.Get("lb-from"), "They must be different")
+	assert.Equal(t, resp1.Header.Get("lb-from"), resp4.Header.Get("lb-from"), "They must be the same")
 }
 
 func BenchmarkBalancer(b *testing.B) {
