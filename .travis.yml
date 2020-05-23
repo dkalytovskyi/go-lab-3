@@ -1,0 +1,13 @@
+os: linux
+
+language: go
+
+go: "1.14"
+
+services:
+  - docker
+
+script:
+  - docker-compose up -d
+  - cd $GOPATH/src/github.com/dkalytovskyi/go-lab-3/integration
+  - go test -bench=.
