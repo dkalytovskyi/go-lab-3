@@ -1,38 +1,62 @@
 package main
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"strconv"
+	"strings"
+	"testing"
 )
-func TestBalancer(t *testing.T) {
-	assert := assert.New(t)
-	var serversPool = []string {
+
+type TestCase struct {
+	name           string
+	url            string
+	serverHealth   string
+	expectedServer string
+}
+
+var (
+	serversPool2 = []string{
 		"server1:8080",
 		"server2:8080",
 		"server3:8080",
-		"server4:8080",
-		"server5:8080",
-		"server6:8080",
-	}
-	var URLs = []string {
-		"test/path/to/target/file",
-		"test/path/to/target/file/one",
-		"test/path/to/target/file/two",
-		"another/test/path/animals",
-		"another/test/path/cars",
-		"another/test/path/movies",
-	}
-	var expectedHash = []uint32 {
-		4193102960,
-		2044097447,
-		466081617,
-		884529959,
-		191875093,
-		4268647763,
 	}
 
-	for i, _ := range serversPool {
-		assert.Equal(expectedHash[i], hash(URLs[i]))
-		assert.Equal(int(expectedHash[i])%len(serversPool), determineServerByURL(URLs[i], serversPool))
+	cases = []TestCase{
+		{"All servers working", "test/path/to/target/file/two",
+			"1 1 1", serversPool2[0]},
+		{"All servers working", "test/path/new",
+			"1 1 1", serversPool2[1]},
+		{"All servers working", "test/path/to/target/file",
+			"1 1 1", serversPool2[2]},
+		{"Server not working", "test/path/to/target/file/two",
+			"0 1 1", serversPool2[1]},
+		{"Server not working", "test/path/new",
+			"1 0 1", serversPool2[0]},
+		{"Server not working", "test/path/to/target/file",
+			"1 1 0", serversPool2[0]},
+		{"All servers down", "test/path/to/target/file",
+			"0 0 0", ""},
 	}
+)
+
+func TestBalancer(t *testing.T) {
+
+	//serversPool = serversPool2
+	safeServer = SafeServer{v: make([]Server, len(serversPool))}
+
+	for _, tcase := range cases {
+		t.Run(tcase.name, func(t *testing.T) {
+			serverHealth := strings.Split(tcase.serverHealth, " ")
+			for index, health := range serverHealth {
+				healthBoolean, _ := strconv.ParseBool(health)
+				safeServer.v[index] = Server{
+					IsHealthy: healthBoolean}
+
+			}
+
+			assert.Equal(t, tcase.expectedServer, chooseHealthyServer(tcase.url))
+
+		})
+	}
+
 }
